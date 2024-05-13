@@ -26,6 +26,7 @@ router.get("/", async (req, res, next) => {
     const contacts = await listContacts();
     res.status(200).json(contacts);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -47,7 +48,6 @@ router.get("/:contactId", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   try {
     const { name, email, phone } = req.body;
-    console.log(req.body);
     const validate = schema.validate({ name, email, phone });
     if (validate.error) {
       res.status(400).json({
@@ -57,7 +57,9 @@ router.post("/", async (req, res, next) => {
       return;
     }
     const contact = await addContact({ name, email, phone });
-    res.status(201).json(contact);
+    if (contact) {
+      res.status(201).json({ message: "Contact created", contact });
+    }
   } catch (e) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -67,7 +69,7 @@ router.delete("/:contactId", async (req, res, next) => {
   try {
     const id = req.params.contactId;
     const contact = await removeContact(id);
-    if (contact === null) {
+    if (contact === null || contact === undefined) {
       res.status(404).json({ message: "Not found" });
       return;
     }
@@ -81,7 +83,7 @@ router.put("/:contactId", async (req, res, next) => {
   try {
     const body = req.body;
     if (!Object.keys(body).length) {
-      res.status(400).json({ message: "Missing fields" });
+      res.status(400).json({ message: "Missing fields to update" });
       return;
     }
     const validate = schemaUpdate.validate(req.body);
